@@ -15,7 +15,7 @@ namespace BlockChain
             private int initiator;
             private int target;
             private int open_key;
-            private int coin;
+            private float coin;
 
             // Добавить время !!!
 
@@ -31,11 +31,11 @@ namespace BlockChain
             {
                 get { return open_key; }
             }
-            public int Coin
+            public float Coin
             {
                 get { return coin; }
             }
-            public void Init(int Initiator, int Target, int Open_key, int Coin)
+            public void Init(int Initiator, int Target, int Open_key, float Coin)
             {
                 this.initiator = Initiator;
                 this.target = Target;
@@ -48,9 +48,9 @@ namespace BlockChain
                 Console.WriteLine("NEW TRANSACTION: " + "initiator = " + initiator.ToString() + " target = " + target.ToString() + " open_key = " + open_key + " coin = " + coin.ToString());
             }
         }
-        private int reward = 1 ;
+        private float reward = 0.01f ;
 
-        public int Reward
+        public float Reward
         {
             get { return reward; }
         }
@@ -76,13 +76,13 @@ namespace BlockChain
 
         public List<Block> BlockChain = new List<Block> { };
 
-        public int TallyWalletByUser(User user) // Перегрузка
+        public float TallyWalletByUser(User user) // Перегрузка
         {
             return TallyWallet(user.Initiator);
         }
-        public int TallyWallet(int target) // Считаем сколько денег у таргета
+        public float TallyWallet(int target) // Считаем сколько денег у таргета
         {
-            int sum = 0;
+            float sum = 0;
             foreach (Block block in BlockChain)
             {
                 if (block.transaction.Target == target)
@@ -113,12 +113,12 @@ namespace BlockChain
     // Базовый класс для пользователя
     class User
     {
-        static Random random = new Random();
+        public static Random random = new Random();
         protected static int user_id = 0;
         protected int initiator;
         protected int closed_key;
         protected int open_key;
-        protected float chance_to_generate_transaction = 0.15f;
+        public float chance_to_generate_transaction = 0.35f;
 
         public User() // Конструктор типа 
         {
@@ -130,9 +130,9 @@ namespace BlockChain
 
         public void SetChance_to_generate_transaction(Operations net)
         {
-            if (net.TallyWalletByUser(this) > 10 )
+            if (net.TallyWalletByUser(this) > 10f )
             {
-                chance_to_generate_transaction = 0.4f;
+                chance_to_generate_transaction = 0.75f;
             }
         }
 
@@ -141,18 +141,11 @@ namespace BlockChain
             Console.WriteLine("initiator = " + initiator.ToString() + " closed_key = " + closed_key + " open_key = " + open_key.ToString() + " user_id = " + user_id.ToString());
         }
 
-        public void UserStep()
-        {
-            if ((float)random.NextDouble() < chance_to_generate_transaction)
-            {
-                InitializeRandomTransaction();
-            }
-        }
         public Operations.Transaction InitializeRandomTransaction() // Метод формирующий заявку на транзакцию
         {
             Operations.Transaction trans = new Operations.Transaction();
             int target = random.Next(0, user_id);
-            trans.Init(initiator, target, open_key, (int) random.Next(1, 100));
+            trans.Init(initiator, target, open_key, (float) random.NextDouble());
             trans.TransactionInfo();
             return trans;
         }
@@ -185,9 +178,9 @@ namespace BlockChain
         // Неплохо бы добавить proof-of-work
         public void CatchTransaction(Operations net, Operations.Transaction trans)
         {
-            int tmp = net.TallyWallet(trans.Initiator);
+            float tmp = net.TallyWallet(trans.Initiator);
 
-            if (tmp < trans.Coin || tmp <= net.Reward)
+            if (tmp <= trans.Coin || tmp <= net.Reward)
             {
                 Console.WriteLine("Недостаточно средств, User " + trans.Initiator + " имеет: " + tmp + " хочет перевести: " + trans.Coin);
                 return;
@@ -286,37 +279,63 @@ namespace BlockChain
                 miner.UserInfo();
             }
 
+            Console.WriteLine(" ");
+            Console.WriteLine("WALLETS: ");
+
+            foreach (User user in net.users)
+            {
+                Console.WriteLine("User " + user.Initiator + " have " + net.TallyWalletByUser(user));
+            }
+
+            foreach (Miner miner in net.miners)
+            {
+                Console.WriteLine("Miner " + miner.Initiator + " have " + net.TallyWalletByUser(miner));
+            }
+
 
             // Примитивный цикл для имитации процесса добавления транзакций и их исполнения
 
-
-            for (int i =0; i<1; i++)
+            for (int i =0; i<100; i++)
             {
-                //System.Threading.Thread.Sleep(0);
+                System.Threading.Thread.Sleep(0);
                 Console.WriteLine();
-                Console.WriteLine("Cycle " + i.ToString());
+                Console.WriteLine("Day " + i.ToString());
 
+                foreach (User user in net.users)
+                {
+                    if ((float)User.random.NextDouble() < user.chance_to_generate_transaction)
+                    {
+                        net.AddToPool(user.InitializeRandomTransaction());
+                    }
+                     // Добавляем в пул транзакцию
+                }
 
-                net.AddToPool(net.users[0].InitializeRandomTransaction()); // Добавляем в пул транзакцию
-
-
+                // Обрабатываем запросы по транзакциям
                 if (net.TransactionsPool.Count > 0)
                 {
                     foreach (Operations.Transaction trans in net.TransactionsPool)
                     {
-                        net.miners[0].CatchTransaction(net, trans);
+                        net.miners[User.random.Next(0, net.miners.Count)].CatchTransaction(net, trans);
                     }
                 }
-
-                Console.WriteLine("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-
-
                 Console.WriteLine("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 
                 net.DeleteTransactions();
             }
 
 
+            Console.WriteLine(" ");
+            Console.WriteLine("WALLETS: ");
+
+            foreach (User user in net.users)
+            {
+                Console.WriteLine("User " + user.Initiator + " have " + net.TallyWalletByUser(user));
+            }
+
+            foreach (Miner miner in net.miners)
+            {
+                Console.WriteLine("Miner " + miner.Initiator + " have " + net.TallyWalletByUser(miner));
+            }
             Console.ReadKey();
         }
     }
