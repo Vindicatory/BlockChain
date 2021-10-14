@@ -1,0 +1,7 @@
+C:\Users\Рома\Desktop\BlockChain\bin\Debug\BlockChain.exe.config
+C:\Users\Рома\Desktop\BlockChain\bin\Debug\BlockChain.exe
+C:\Users\Рома\Desktop\BlockChain\bin\Debug\BlockChain.pdb
+C:\Users\Рома\Desktop\BlockChain\obj\Debug\BlockChain.csproj.AssemblyReference.cache
+C:\Users\Рома\Desktop\BlockChain\obj\Debug\BlockChain.csproj.CoreCompileInputs.cache
+C:\Users\Рома\Desktop\BlockChain\obj\Debug\BlockChain.exe
+C:\Users\Рома\Desktop\BlockChain\obj\Debug\BlockChain.pdb
